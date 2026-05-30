@@ -15,7 +15,10 @@ async def lifespan(application: FastAPI):
     cfg = Config.from_env()
     init_db(cfg)
 
-    feishu_client = FeishuClient(cfg)
+    feishu_client = FeishuClient(
+        app_id=cfg.feishu_app_id,
+        app_secret=cfg.feishu_app_secret,
+    )
     llm_client = LLMClient(cfg)
 
     application.state.cfg = cfg
