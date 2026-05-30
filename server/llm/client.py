@@ -7,15 +7,28 @@ class LLMClient:
     def __init__(self, cfg: Config):
         self.cfg = cfg
         self._http = httpx.AsyncClient(timeout=120)
+        self._base = cfg.llm_base_url.rstrip("/")
+        # OpenRouter 用 Bearer token，Anthropic 用 x-api-key
+        if "openrouter" in self._base or cfg.llm_api_key.startswith("sk-or-"):
+            self._headers = {
+                "Authorization": f"Bearer {cfg.llm_api_key}",
+                "Content-Type": "application/json",
+                "HTTP-Referer": "https://ai-coach.onrender.com",
+                "X-Title": "AI Learning Coach",
+            }
+            self._messages_url = f"{self._base}/v1/messages"
+        else:
+            self._headers = {
+                "x-api-key": cfg.llm_api_key,
+                "anthropic-version": "2023-06-01",
+                "Content-Type": "application/json",
+            }
+            self._messages_url = f"{self._base}/v1/messages"
 
     async def chat(self, system_prompt: str, user_message: str, temperature: float = 0.7, max_tokens: int = 4096) -> str:
         response = await self._http.post(
-            f"{self.cfg.llm_base_url}/v1/messages",
-            headers={
-                "x-api-key": self.cfg.llm_api_key,
-                "anthropic-version": "2023-06-01",
-                "Content-Type": "application/json",
-            },
+            self._messages_url,
+            headers=self._headers,
             json={
                 "model": self.cfg.llm_model,
                 "max_tokens": max_tokens,
@@ -28,6 +41,10 @@ class LLMClient:
         content = data.get("content", [])
         if content and len(content) > 0:
             return content[0].get("text", "")
+        # Fallback: OpenAI-compatible format (choices[0].message.content)
+        choices = data.get("choices", [])
+        if choices and len(choices) > 0:
+            return choices[0].get("message", {}).get("content", "")
         return ""
 
     async def chat_json(self, system_prompt: str, user_message: str) -> dict:
