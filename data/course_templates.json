@@ -1,0 +1,62 @@
+[
+  {
+    "domain": "Python",
+    "stage": "入门",
+    "name": "Python 零基础入门",
+    "description": "从零开始学 Python，覆盖基础语法到小项目实战",
+    "roadmap": ["变量与数据类型", "输入输出与字符串", "条件判断 if/else", "循环 for/while", "列表与字典", "函数定义与调用", "文件读写", "错误处理", "API 请求", "综合小项目"],
+    "sample_plan": {
+      "outline": [
+        {"week": 1, "theme": "Python 基础语法", "goals": ["掌握变量与类型", "理解控制流"]},
+        {"week": 2, "theme": "数据结构", "goals": ["熟练使用列表字典", "字符串处理"]},
+        {"week": 3, "theme": "函数与文件", "goals": ["编写函数", "读写文件"]},
+        {"week": 4, "theme": "实战项目", "goals": ["综合应用", "API调用"]}
+      ]
+    }
+  },
+  {
+    "domain": "SQL",
+    "stage": "入门",
+    "name": "SQL 从入门到实战",
+    "description": "掌握数据查询与分析的核心 SQL 技能",
+    "roadmap": ["SELECT 基础查询", "WHERE 条件过滤", "ORDER BY 排序", "JOIN 多表连接", "GROUP BY 分组聚合", "子查询", "窗口函数基础", "实战查询练习"],
+    "sample_plan": {
+      "outline": [
+        {"week": 1, "theme": "查询基础", "goals": ["SELECT", "WHERE", "ORDER BY"]},
+        {"week": 2, "theme": "多表操作", "goals": ["JOIN", "子查询"]},
+        {"week": 3, "theme": "聚合分析", "goals": ["GROUP BY", "HAVING", "聚合函数"]},
+        {"week": 4, "theme": "进阶与实战", "goals": ["窗口函数", "复杂查询"]}
+      ]
+    }
+  },
+  {
+    "domain": "AI",
+    "stage": "入门",
+    "name": "AI 通识入门",
+    "description": "理解 AI 核心概念、LLM 原理和 Prompt 工程",
+    "roadmap": ["AI 发展简史与基本概念", "机器学习 vs 深度学习", "Transformer 与 LLM 原理", "Prompt Engineering 基础", "RAG 与 Agent 概念", "AI 产品设计思路", "AI 伦理与安全"],
+    "sample_plan": {
+      "outline": [
+        {"week": 1, "theme": "AI 概览", "goals": ["了解AI发展", "理解基本概念"]},
+        {"week": 2, "theme": "LLM 原理", "goals": ["Transformer架构", "训练与推理"]},
+        {"week": 3, "theme": "Prompt 工程", "goals": ["Prompt设计", "Chain-of-Thought"]},
+        {"week": 4, "theme": "AI 应用", "goals": ["RAG", "Agent", "产品设计"]}
+      ]
+    }
+  },
+  {
+    "domain": "英语",
+    "stage": "入门",
+    "name": "英语日常提升",
+    "description": "碎片时间提升英语听说读写能力",
+    "roadmap": ["日常词汇积累", "场景对话练习", "短篇阅读", "听力训练", "口语表达", "商务英语基础"],
+    "sample_plan": {
+      "outline": [
+        {"week": 1, "theme": "日常词汇", "goals": ["积累50个高频词汇", "简单对话"]},
+        {"week": 2, "theme": "场景对话", "goals": ["餐厅/购物/出行场景", "句型模板"]},
+        {"week": 3, "theme": "阅读与听力", "goals": ["短篇新闻阅读", "播客听力"]},
+        {"week": 4, "theme": "输出表达", "goals": ["自我介绍", "观点表达", "邮件写作"]}
+      ]
+    }
+  }
+]

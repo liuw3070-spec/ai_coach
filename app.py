@@ -1,0 +1,41 @@
+import asyncio
+from contextlib import asynccontextmanager
+import uvicorn
+from fastapi import FastAPI
+from server.feishu.webhook import router as feishu_router
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    from config import Config
+    from server.models.database import init_db, async_session
+    from server.feishu.feishu_client import FeishuClient
+    from server.llm.client import LLMClient
+
+    cfg = Config.from_env()
+    init_db(cfg)
+
+    feishu_client = FeishuClient(cfg)
+    llm_client = LLMClient(cfg)
+
+    application.state.cfg = cfg
+    application.state.feishu = feishu_client
+    application.state.llm = llm_client
+    application.state.async_session = async_session
+
+    from server.scheduler import run_scheduler
+    task = asyncio.create_task(run_scheduler(async_session, llm_client, feishu_client, cfg))
+
+    yield
+
+    task.cancel()
+    await feishu_client.close()
+    await llm_client.close()
+
+
+app = FastAPI(title="AI Learning Coach", version="0.1.0", lifespan=lifespan)
+app.include_router(feishu_router, prefix="/feishu")
+
+
+if __name__ == "__main__":
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=True)
