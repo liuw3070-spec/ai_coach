@@ -4,13 +4,14 @@ from fastapi.responses import JSONResponse
 from .router import detect_intent
 from .card_builder import (
     build_welcome_card, build_daily_learning_card,
-    build_status_card, build_plan_confirm_card,
+    build_status_card, build_plan_confirm_card, build_profile_prompt_card,
 )
 
 router = APIRouter()
 
 # 对话状态：open_id → {state, domain, stage, timestamp}
 _pending_conversations: dict[str, dict] = {}
+_last_card_actions: dict[str, str] = {}
 
 
 @router.post("/webhook")
@@ -109,6 +110,10 @@ async def _handle_card_action(event, open_id, feishu, llm, request):
         parts = action_value.replace("tpl_", "").split("_")
         domain = parts[0]
         stage = parts[1] if len(parts) > 1 else "入门"
+        action_key = f"{open_id}:{action_value}"
+        if _last_card_actions.get(open_id) == action_key:
+            return JSONResponse({"code": 0})
+        _last_card_actions[open_id] = action_key
 
         # 存储对话状态
         _pending_conversations[open_id] = {
@@ -117,15 +122,7 @@ async def _handle_card_action(event, open_id, feishu, llm, request):
             "stage": stage,
         }
 
-        await feishu.send_message(open_id, (
-            f"好的，你选择了 **{domain} · {stage}** 📋\n\n"
-            "在生成计划前，简单告诉我你的情况：\n"
-            "1. 学习目标？(转行/提升/兴趣/面试)\n"
-            "2. 当前基础？(零基础/入门/中级)\n"
-            "3. 每天什么时间学习？有多少分钟？\n\n"
-            "比如这样回复：\n"
-            "\"想提升Python技能，目前只会基础语法，每天午休20分钟可以学习\""
-        ))
+        await feishu.send_card(open_id, build_profile_prompt_card(domain, stage))
 
     elif action_value == "confirm_plan":
         _pending_conversations.pop(open_id, None)

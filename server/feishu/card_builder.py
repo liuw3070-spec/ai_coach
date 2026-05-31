@@ -78,6 +78,42 @@ def build_welcome_card(domains: list[str]) -> dict:
     }
 
 
+def build_profile_prompt_card(domain: str, stage: str) -> dict:
+    return {
+        "config": {"wide_screen_mode": True},
+        "header": {
+            "title": {"tag": "plain_text", "content": "📋 学习画像采集"},
+            "template": "blue",
+        },
+        "elements": [
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        f"已选择：**{domain} · {stage}**\n\n"
+                        "在生成计划前，请简单告诉我：\n"
+                        "1. 学习目标：转行 / 提升 / 兴趣 / 面试\n"
+                        "2. 当前基础：零基础 / 入门 / 中级\n"
+                        "3. 学习时间：每天什么时候？多少分钟？"
+                    ),
+                },
+            },
+            {"tag": "hr"},
+            {
+                "tag": "div",
+                "text": {
+                    "tag": "lark_md",
+                    "content": (
+                        "**示例回复**\n"
+                        "想提升 Python 技能，目前只会基础语法，每天午休 20 分钟可以学习"
+                    ),
+                },
+            },
+        ],
+    }
+
+
 def build_plan_confirm_card(outline: list[dict], first_units: list[dict]) -> dict:
     weeks_text = "\n".join(f"📅 第{w['week']}周：{w['theme']}" for w in outline)
     return {
