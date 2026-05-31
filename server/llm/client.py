@@ -34,14 +34,15 @@ class LLMClient:
                 "temperature": temperature,
             },
         )
+        response.raise_for_status()
         data = response.json()
         choices = data.get("choices", [])
         if choices and len(choices) > 0:
             return choices[0].get("message", {}).get("content", "")
         return ""
 
-    async def chat_json(self, system_prompt: str, user_message: str) -> dict:
-        text = await self.chat(system_prompt, user_message, temperature=0.3)
+    async def chat_json(self, system_prompt: str, user_message: str = "") -> dict:
+        text = await self.chat(system_prompt, user_message or "请按要求返回 JSON。", temperature=0.3)
         if "```json" in text:
             text = text.split("```json")[1].split("```")[0]
         elif "```" in text:
