@@ -16,6 +16,7 @@ _pending_conversations: dict[str, dict] = {}
 @router.post("/webhook")
 async def feishu_webhook(request: Request):
     body = await request.json()
+    print(f"feishu_webhook body={json.dumps(body, ensure_ascii=False)[:2000]}")
 
     # URL 验证
     if body.get("type") == "url_verification":
@@ -28,14 +29,17 @@ async def feishu_webhook(request: Request):
 
     event_type = body.get("header", {}).get("event_type", "")
     event = body.get("event", {})
-    sender = event.get("sender", {})
-    open_id = sender.get("sender_id", {}).get("open_id", "")
+    open_id = _extract_open_id(body, event)
 
     if event_type == "im.message.receive_v1":
         return await _handle_message(event, open_id, feishu, llm, request)
 
     if event_type == "card.action.trigger":
         return await _handle_card_action(event, open_id, feishu, llm, request)
+
+    # 飞书“回调配置”里的卡片回传可能没有 header.event_type，action 在根节点。
+    if body.get("action") or body.get("action_value"):
+        return await _handle_card_action(body, open_id, feishu, llm, request)
 
     return JSONResponse({"code": 0})
 
@@ -92,8 +96,14 @@ async def _handle_message(event, open_id, feishu, llm, request):
 # ── 卡片按钮回调 ──
 
 async def _handle_card_action(event, open_id, feishu, llm, request):
+    if not open_id:
+        open_id = _extract_open_id(event, event)
     action_value = _extract_action_value(event)
     print(f"card.action.trigger open_id={open_id} action_value={action_value}")
+
+    if not open_id:
+        print(f"card.action.trigger missing open_id event={json.dumps(event, ensure_ascii=False)[:2000]}")
+        return JSONResponse({"code": 0})
 
     if action_value and action_value.startswith("tpl_"):
         parts = action_value.replace("tpl_", "").split("_")
@@ -153,10 +163,42 @@ def _extract_action_value(event: dict) -> str:
     return action.get("tag", "") if isinstance(action.get("tag"), str) else ""
 
 
+def _extract_open_id(body: dict, event: dict | None = None) -> str:
+    event = event or {}
+
+    candidates = [
+        event.get("sender", {}).get("sender_id", {}),
+        event.get("operator", {}).get("operator_id", {}),
+        event.get("operator", {}),
+        body.get("sender", {}).get("sender_id", {}),
+        body.get("operator", {}).get("operator_id", {}),
+        body.get("operator", {}),
+    ]
+
+    for candidate in candidates:
+        if isinstance(candidate, dict):
+            for key in ("open_id", "user_id", "union_id"):
+                value = candidate.get(key)
+                if value:
+                    return value
+
+    for key in ("open_id", "user_id", "operator_id"):
+        value = body.get(key) or event.get(key)
+        if isinstance(value, str) and value:
+            return value
+        if isinstance(value, dict):
+            for nested_key in ("open_id", "user_id", "union_id"):
+                nested_value = value.get(nested_key)
+                if nested_value:
+                    return nested_value
+
+    return ""
+
+
 # ── 处理函数 ──
 
 async def _handle_new_plan(open_id: str, feishu):
-    await feishu.send_card(open_id, build_welcome_card(["Python", "SQL", "AI", "英语"]))
+    await feishu.send_card(open_id, build_welcome_card(["Python", "SQL", "AI", "六级英语"]))
 
 
 async def _handle_profile_collected(open_id: str, text: str, pending: dict, feishu, llm, request):

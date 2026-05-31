@@ -52,7 +52,7 @@ def build_status_card(metrics: dict, profile: dict) -> dict:
 
 def build_welcome_card(domains: list[str]) -> dict:
     domain_buttons = []
-    emoji_map = {"Python": "🐍", "SQL": "🗄️", "AI": "🤖", "英语": "🇬🇧"}
+    emoji_map = {"Python": "🐍", "SQL": "🗄️", "AI": "🤖", "六级英语": "🇬🇧"}
     for d in domains:
         emoji = emoji_map.get(d, "📚")
         domain_buttons.append({

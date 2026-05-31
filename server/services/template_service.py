@@ -21,4 +21,18 @@ class TemplateService:
                 CourseTemplate.stage == stage,
             )
         )
-        return result.scalar_one_or_none()
+        template = result.scalar_one_or_none()
+        if template:
+            return template
+
+        # 兼容已初始化数据库里的旧“英语”模板，避免改名后线上找不到课程。
+        if domain == "六级英语":
+            result = await self.db.execute(
+                select(CourseTemplate).where(
+                    CourseTemplate.domain == "英语",
+                    CourseTemplate.stage == stage,
+                )
+            )
+            return result.scalar_one_or_none()
+
+        return None

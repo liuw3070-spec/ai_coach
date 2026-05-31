@@ -1,7 +1,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app import app
-from server.feishu.webhook import _extract_action_value
+from server.feishu.webhook import _extract_action_value, _extract_open_id
 from server.feishu.router import detect_intent
 
 
@@ -59,3 +59,18 @@ def test_extract_card_action_value_from_object():
 def test_extract_card_action_value_from_legacy_string():
     event = {"action": {"value": "tpl_SQL_入门"}}
     assert _extract_action_value(event) == "tpl_SQL_入门"
+
+
+def test_extract_open_id_from_event_sender():
+    event = {"sender": {"sender_id": {"open_id": "ou_user1"}}}
+    assert _extract_open_id({}, event) == "ou_user1"
+
+
+def test_extract_open_id_from_card_callback_root():
+    body = {"open_id": "ou_card_user", "action": {"value": {"action": "tpl_Python_入门"}}}
+    assert _extract_open_id(body, {}) == "ou_card_user"
+
+
+def test_extract_open_id_from_card_operator():
+    body = {"operator": {"operator_id": {"open_id": "ou_operator"}}}
+    assert _extract_open_id(body, {}) == "ou_operator"
