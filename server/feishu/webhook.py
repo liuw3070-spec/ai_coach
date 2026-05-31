@@ -1,4 +1,5 @@
 import json
+import time
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from .router import detect_intent
@@ -12,6 +13,8 @@ router = APIRouter()
 # 对话状态：open_id → {state, domain, stage, timestamp}
 _pending_conversations: dict[str, dict] = {}
 _last_card_actions: dict[str, str] = {}
+_processed_events: dict[str, float] = {}
+_EVENT_TTL_SECONDS = 600
 
 
 @router.post("/webhook")
@@ -31,6 +34,10 @@ async def feishu_webhook(request: Request):
     event_type = body.get("header", {}).get("event_type", "")
     event = body.get("event", {})
     open_id = _extract_open_id(body, event)
+    dedupe_key = _event_dedupe_key(body, event)
+    if dedupe_key and _is_duplicate_event(dedupe_key):
+        print(f"duplicate feishu event ignored key={dedupe_key}")
+        return JSONResponse({"code": 0})
 
     if event_type == "im.message.receive_v1":
         return await _handle_message(event, open_id, feishu, llm, request)
@@ -190,6 +197,39 @@ def _extract_open_id(body: dict, event: dict | None = None) -> str:
                     return nested_value
 
     return ""
+
+
+def _event_dedupe_key(body: dict, event: dict | None = None) -> str:
+    event = event or {}
+    header = body.get("header", {})
+
+    event_id = header.get("event_id")
+    if event_id:
+        return f"event:{event_id}"
+
+    message_id = event.get("message", {}).get("message_id")
+    if message_id:
+        return f"message:{message_id}"
+
+    open_message_id = event.get("open_message_id") or body.get("open_message_id")
+    action_value = _extract_action_value(event or body)
+    if open_message_id and action_value:
+        return f"card:{open_message_id}:{action_value}"
+
+    return ""
+
+
+def _is_duplicate_event(key: str) -> bool:
+    now = time.time()
+    expired = [k for k, seen_at in _processed_events.items() if now - seen_at > _EVENT_TTL_SECONDS]
+    for k in expired:
+        _processed_events.pop(k, None)
+
+    if key in _processed_events:
+        return True
+
+    _processed_events[key] = now
+    return False
 
 
 # ── 处理函数 ──
