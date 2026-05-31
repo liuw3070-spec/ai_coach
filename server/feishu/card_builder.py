@@ -79,6 +79,14 @@ def build_welcome_card(domains: list[str]) -> dict:
 
 
 def build_profile_prompt_card(domain: str, stage: str) -> dict:
+    examples = {
+        "Python": "想提升 Python 技能，目前只会基础语法，每天午休 20 分钟可以学习",
+        "SQL": "想准备数据分析岗位，SQL 只会简单 SELECT，每天晚上 25 分钟可以练习",
+        "AI": "想系统了解 AI 产品和大模型应用，目前只知道基础概念，每天通勤 20 分钟学习",
+        "六级英语": "想备考英语六级，目前词汇量一般，听力比较弱，每天晚上 30 分钟可以学习",
+    }
+    example = examples.get(domain, f"想学习 {domain}，目前是零基础，每天 20 分钟可以学习")
+
     return {
         "config": {"wide_screen_mode": True},
         "header": {
@@ -106,7 +114,7 @@ def build_profile_prompt_card(domain: str, stage: str) -> dict:
                     "tag": "lark_md",
                     "content": (
                         "**示例回复**\n"
-                        "想提升 Python 技能，目前只会基础语法，每天午休 20 分钟可以学习"
+                        f"{example}"
                     ),
                 },
             },
