@@ -8,16 +8,15 @@ from server.feishu.webhook import router as feishu_router
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     from config import Config
-    from server.models.database import init_db, async_session
+    from server.models import database as db_module
     from server.feishu.feishu_client import FeishuClient
     from server.llm.client import LLMClient
 
     cfg = Config.from_env()
-    init_db(cfg)
+    db_module.init_db(cfg)
 
     # 启动时验证数据库连接
-    from server.models.database import check_db_connection
-    db_ok = await check_db_connection()
+    db_ok = await db_module.check_db_connection()
     if not db_ok:
         print("[startup] WARNING: Database connection check failed — data features unavailable")
 
@@ -30,10 +29,10 @@ async def lifespan(application: FastAPI):
     application.state.cfg = cfg
     application.state.feishu = feishu_client
     application.state.llm = llm_client
-    application.state.async_session = async_session
+    application.state.async_session = db_module.async_session
 
     from server.scheduler import run_scheduler
-    task = asyncio.create_task(run_scheduler(async_session, llm_client, feishu_client, cfg))
+    task = asyncio.create_task(run_scheduler(db_module.async_session, llm_client, feishu_client, cfg))
 
     yield
 
