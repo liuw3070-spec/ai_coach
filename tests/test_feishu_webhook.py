@@ -1,6 +1,7 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
 from app import app
+from server.feishu.webhook import _extract_action_value
 from server.feishu.router import detect_intent
 
 
@@ -48,3 +49,13 @@ def test_detect_unknown():
 
 def test_detect_help():
     assert detect_intent("/help") == ("help", None)
+
+
+def test_extract_card_action_value_from_object():
+    event = {"action": {"value": {"action": "tpl_Python_入门"}}}
+    assert _extract_action_value(event) == "tpl_Python_入门"
+
+
+def test_extract_card_action_value_from_legacy_string():
+    event = {"action": {"value": "tpl_SQL_入门"}}
+    assert _extract_action_value(event) == "tpl_SQL_入门"

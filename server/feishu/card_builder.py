@@ -19,10 +19,10 @@ def build_daily_learning_card(unit: dict) -> dict:
             {
                 "tag": "action",
                 "actions": [
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "✅ 完成"}, "type": "primary", "value": "completed"},
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "😰 太难"}, "type": "default", "value": "too_hard"},
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "😴 太简单"}, "type": "default", "value": "too_easy"},
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "⏰ 没时间"}, "type": "default", "value": "no_time"},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "✅ 完成"}, "type": "primary", "value": {"action": "completed"}},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "😰 太难"}, "type": "default", "value": {"action": "too_hard"}},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "😴 太简单"}, "type": "default", "value": {"action": "too_easy"}},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "⏰ 没时间"}, "type": "default", "value": {"action": "no_time"}},
                 ]
             }
         ]
@@ -43,7 +43,7 @@ def build_status_card(metrics: dict, profile: dict) -> dict:
             {
                 "tag": "action",
                 "actions": [
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "📋 查看完整笔记"}, "type": "default", "value": "view_notes"},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "📋 查看完整笔记"}, "type": "default", "value": {"action": "view_notes"}},
                 ]
             }
         ]
@@ -59,7 +59,7 @@ def build_welcome_card(domains: list[str]) -> dict:
             "tag": "button",
             "text": {"tag": "plain_text", "content": f"{emoji} {d}"},
             "type": "primary",
-            "value": f"tpl_{d}_入门"
+            "value": {"action": f"tpl_{d}_入门"}
         })
 
     return {
@@ -88,8 +88,8 @@ def build_plan_confirm_card(outline: list[dict], first_units: list[dict]) -> dic
             {
                 "tag": "action",
                 "actions": [
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "✅ 确认开始"}, "type": "primary", "value": "confirm_plan"},
-                    {"tag": "button", "text": {"tag": "plain_text", "content": "🔄 换个方向"}, "type": "default", "value": "retry_plan"},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "✅ 确认开始"}, "type": "primary", "value": {"action": "confirm_plan"}},
+                    {"tag": "button", "text": {"tag": "plain_text", "content": "🔄 换个方向"}, "type": "default", "value": {"action": "retry_plan"}},
                 ]
             }
         ]

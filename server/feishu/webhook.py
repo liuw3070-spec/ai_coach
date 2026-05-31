@@ -92,13 +92,8 @@ async def _handle_message(event, open_id, feishu, llm, request):
 # ── 卡片按钮回调 ──
 
 async def _handle_card_action(event, open_id, feishu, llm, request):
-    action_value = ""
-
-    # 飞书卡片 action 结构有多种可能格式
-    if "action" in event:
-        action_value = event["action"].get("value", event["action"].get("tag", ""))
-    if not action_value:
-        action_value = event.get("action_value", "")
+    action_value = _extract_action_value(event)
+    print(f"card.action.trigger open_id={open_id} action_value={action_value}")
 
     if action_value and action_value.startswith("tpl_"):
         parts = action_value.replace("tpl_", "").split("_")
@@ -136,6 +131,26 @@ async def _handle_card_action(event, open_id, feishu, llm, request):
         await feishu.send_message(open_id, "📝 完整笔记功能将在后续版本中开放。")
 
     return JSONResponse({"code": 0})
+
+
+def _extract_action_value(event: dict) -> str:
+    """兼容飞书卡片回调的多种 action value 结构。"""
+    action = event.get("action") or {}
+    value = action.get("value") or event.get("action_value") or ""
+
+    if isinstance(value, dict):
+        return (
+            value.get("action")
+            or value.get("value")
+            or value.get("key")
+            or value.get("tag")
+            or ""
+        )
+
+    if isinstance(value, str):
+        return value
+
+    return action.get("tag", "") if isinstance(action.get("tag"), str) else ""
 
 
 # ── 处理函数 ──
