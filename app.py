@@ -15,6 +15,12 @@ async def lifespan(application: FastAPI):
     cfg = Config.from_env()
     init_db(cfg)
 
+    # 启动时验证数据库连接
+    from server.models.database import check_db_connection
+    db_ok = await check_db_connection()
+    if not db_ok:
+        print("[startup] WARNING: Database connection check failed — data features unavailable")
+
     feishu_client = FeishuClient(
         app_id=cfg.feishu_app_id,
         app_secret=cfg.feishu_app_secret,

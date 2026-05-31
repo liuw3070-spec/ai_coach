@@ -243,6 +243,11 @@ async def _handle_profile_collected(open_id: str, text: str, pending: dict, feis
     domain = pending["domain"]
     stage = pending.get("stage", "入门")
 
+    async_session = request.app.state.async_session
+    if async_session is None:
+        await feishu.send_message(open_id, "数据库连接未就绪，请稍后再试。")
+        return
+
     await feishu.send_message(open_id, f"⏳ 正在分析你的学习画像，生成个性化计划...")
 
     try:
@@ -250,7 +255,7 @@ async def _handle_profile_collected(open_id: str, text: str, pending: dict, feis
         from server.services.template_service import TemplateService
         from server.services.plan_service import PlanService
 
-        async with request.app.state.async_session() as db:
+        async with async_session() as db:
             # 1. 提取用户画像
             profile_svc = ProfileService(db, llm)
             profile = await profile_svc.create_profile_from_dialog(open_id, [text])
@@ -274,7 +279,9 @@ async def _handle_profile_collected(open_id: str, text: str, pending: dict, feis
             ))
 
     except Exception as e:
+        import traceback
         print(f"Profile/plan generation error: {e}")
+        traceback.print_exc()
         await feishu.send_message(open_id, "生成计划时出了点问题，请稍后再试或发送 /new_plan 重新开始。")
 
 
@@ -294,7 +301,12 @@ async def _handle_feedback(open_id: str, feedback: str, feishu, llm, request):
         from server.services.profile_service import ProfileService
         from server.services.plan_service import PlanService
 
-        async with request.app.state.async_session() as db:
+        async_session = request.app.state.async_session
+        if async_session is None:
+            print("Feedback: database not initialized, skipping rebalance")
+            return
+
+        async with async_session() as db:
             profile_svc = ProfileService(db, llm)
             await profile_svc.update_feedback(open_id, feedback)
 
@@ -314,9 +326,13 @@ async def _handle_feedback(open_id: str, feedback: str, feishu, llm, request):
 
 
 async def _handle_status(open_id: str, feishu, llm, request):
+    async_session = request.app.state.async_session
+    if async_session is None:
+        await feishu.send_message(open_id, "数据库连接未就绪，无法获取学习状态。")
+        return
     try:
         from server.services.profile_service import ProfileService
-        async with request.app.state.async_session() as db:
+        async with async_session() as db:
             profile_svc = ProfileService(db, llm)
             metrics = await profile_svc.update_growth_metrics(open_id)
             profile = await profile_svc.get_profile(open_id)
